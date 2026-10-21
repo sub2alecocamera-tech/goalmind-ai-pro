@@ -1,0 +1,63 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String         @id @default(uuid())
+  email           String         @unique
+  passwordHash    String
+  fullName        String?
+  role            Role           @default(USER)
+  plan            PlanType       @default(FREE)
+  planExpiresAt   DateTime?      
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  payments        Payment[]
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  USER
+}
+
+enum PlanType {
+  FREE
+  PASS_24H
+  PASS_7D
+  MONTHLY_PRO
+  VIP
+  OWNER_UNLIMITED
+}
+
+model SettlementConfig {
+  id          String   @id @default("default_config")
+  bankName    String   @default("OPay")
+  accountName String   @default("Clement Kayode Olatunji")
+  accountNum  String   @default("7067183541")
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan        PlanType
+  amount      Decimal       
+  bankName    String        @default("OPay")
+  accountNum  String        @default("7067183541")
+  status      PaymentStatus @default(PENDING_VERIFICATION)
+  reference   String        @unique
+  createdAt   DateTime      @default(now())
+}
+
+enum PaymentStatus {
+  PENDING_VERIFICATION
+  APPROVED
+  REJECTED
+}
